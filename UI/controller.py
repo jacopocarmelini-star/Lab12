@@ -48,4 +48,19 @@ class Controller:
 
     """Implementare la parte di ricerca del cammino minimo"""
     # TODO
+    def handle_cammino_minimo(self, e):
+        try:
+            soglia = float(self._view.txt_soglia.value)
+        except:
+            self._view.show_alert("Inserisci un numero valido per la soglia.")
+            return
 
+        min_p, max_p = self._model.get_edges_weight_min_max()
+        if soglia < min_p or soglia > max_p:
+            self._view.show_alert(f"Soglia fuori range ({min_p:.2f}-{max_p:.2f})")
+            return
+
+        path, peso_tot = self._model.get_shortest_path(soglia)
+        self._view.lista_visualizzazione_3.controls.clear()
+        self._view.lista_visualizzazione_3.controls.append(ft.Text(f"[id_rifugio1] nome_rifugio1 (monte_rifugio1) ->[id_rifugio2] nome_rifugio2 (monte_rifugio2)"
+                                                                   f"peso [peso]"))
