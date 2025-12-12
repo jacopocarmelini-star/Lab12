@@ -1,6 +1,5 @@
+from copy import deepcopy
 import networkx as nx
-from sympy.strategies import minimize
-
 from database.dao import DAO
 
 
@@ -75,5 +74,65 @@ class Model:
     """Implementare la parte di ricerca del cammino minimo"""
     # TODO
     def get_shortest_path(self, soglia):
-        floyd_warshall_predecessor_and_distance(G, weight='weight')
+        # creo grafo temporaneo ed elimino edges < della soglia
+        grafo_temp = self.G.copy()
+        edgesDaRimuovere = []
+        for u,v, data in grafo_temp.edges(data=True):
+            if data['weight'] <= soglia:
+                edgesDaRimuovere.append((u,v))
 
+        grafo_temp.remove_edges_from(edgesDaRimuovere)
+
+        best_percorso = []
+        costo_min = float('inf')
+
+        for nodo_start in grafo_temp.nodes():
+            distanze, percorsi = nx.single_source_dijkstra(grafo_temp, source=nodo_start, weight='weight')
+            for nodo_end, costo in distanze.items(): # distanze è dizionario
+                if len(percorsi[nodo_end])>=3:
+                    if costo < costo_min:
+                        costo_min = costo
+                        best_percorso = percorsi[nodo_end]
+
+        # formattazione
+        result = []
+        for i in range(len(best_percorso) - 1):
+            u = best_percorso[i]
+            v = best_percorso[i + 1]
+            peso = grafo_temp[u][v]['weight']
+            result.append((u, v, peso))
+
+        return result
+
+    def get_shortest_paths_ricorsione(self, soglia):
+        self.best_percorso = []
+        self.costo_min = float('inf')
+        for nodo_start in self.G.nodes():
+            parziale = [nodo_start]
+            self._ricorsione(parziale, soglia, 0)
+
+        result = []
+        for i in range(len(self.best_percorso) - 1):
+            u = self.best_percorso[i]
+            v = self.best_percorso[i + 1]
+            peso = self.G[u][v]['weight']
+            result.append((u, v, peso))
+        return result
+
+    def _ricorsione(self, parziale, soglia, peso_attuale):
+        if peso_attuale > self.costo_min:
+            return
+        if len(parziale) >=3:
+            if peso_attuale < self.costo_min:
+                self.costo_min = peso_attuale
+                self.best_percorso = deepcopy(parziale)
+
+        ultimo_nodo = parziale[-1]
+
+        for vicino in self.G.neighbors(ultimo_nodo):
+            if vicino not in parziale:
+                peso_arco = self.G[ultimo_nodo][vicino]['weight']
+                if peso_arco > soglia:
+                    parziale.append(vicino)
+                    self._ricorsione(parziale, soglia, peso_attuale + peso_arco)
+                    parziale.pop()

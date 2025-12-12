@@ -60,7 +60,8 @@ class Controller:
             self._view.show_alert(f"Soglia fuori range ({min_p:.2f}-{max_p:.2f})")
             return
 
-        path, peso_tot = self._model.get_shortest_path(soglia)
+        percorso = self._model.get_shortest_path(soglia)
         self._view.lista_visualizzazione_3.controls.clear()
-        self._view.lista_visualizzazione_3.controls.append(ft.Text(f"[id_rifugio1] nome_rifugio1 (monte_rifugio1) ->[id_rifugio2] nome_rifugio2 (monte_rifugio2)"
-                                                                   f"peso [peso]"))
+        for u, v, peso in percorso:
+                self._view.lista_visualizzazione_3.controls.append(ft.Text(f"[{u.id}] {u} --> [{v.id}] {v} [peso: {peso:.1f}]"))
+        self._view.page.update()
